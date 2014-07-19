@@ -1,0 +1,3 @@
+Get the info about a s2 cell.
+
+    s2info cell <cellid>
