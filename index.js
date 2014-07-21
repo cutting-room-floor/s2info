@@ -1,6 +1,9 @@
 #! /usr/bin/env node
 var fs = require('fs');
 var s2 = require('s2');
+var split = require('split');
+var through = require('through2');
+var geojsonStream = require('geojson-stream');
 var argv = require('minimist')(process.argv.slice(2));
 
 
@@ -8,17 +11,34 @@ if(!argv._.length) {
     return fs.createReadStream('USAGE.txt').pipe(process.stdout);
 }
 
+if (!process.stdin.isTTY) {
+    process.stdin
+        .pipe(split())
+        .pipe(through.obj(function(token, enc, cb){
+            //console.log(token, cellToGeoJSON(token, true))
+            this.push(cellToGeoJSON(token, true));
+            cb();
+        }))
+        .pipe(geojsonStream.stringify())
+        .pipe(process.stdout);
 
-if(argv._[0] === 'cell') {
+} else if(argv._[0] === 'cell') {
+    console.log(JSON.stringify(cellToGeoJSON(argv._[0], true), null, 4));
+}
 
-    var cellid = new s2.S2CellId().fromToken(argv._[1]);
+function cellToGeoJSON(token, props){
+    if(props === undefined) props = true;
+
+    var cellid = new s2.S2CellId().fromToken(token);
     var cell = new s2.S2Cell(cellid);
 
     var geojson = {
         type: "Feature",
-        geometry: cell.toGeoJSON(),
-        properties: {
-            id:cellid.toString(),
+        geometry: cell.toGeoJSON()
+    };
+    if(props) {
+        geojson.properties = {
+            id: cellid.toString(),
             token: cellid.toToken(),
             isface: cellid.isFace(),
             range: [cellid.rangeMin().toToken(), cellid.rangeMax().toToken()],
@@ -28,7 +48,7 @@ if(argv._[0] === 'cell') {
             level: cell.level(),
             orientation: cell.orientation(),
             area: cell.exactArea()
-        }
-    };
-    console.log(JSON.stringify(geojson, null, 4));
+        };
+    }
+    return geojson;
 }

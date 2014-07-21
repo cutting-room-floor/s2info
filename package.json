@@ -12,7 +12,10 @@
   "author": "Mick Thompson",
   "license": "MIT",
   "dependencies": {
+    "geojson-stream": "0.0.0",
     "minimist": "^0.2.0",
-    "s2": "^0.3.1"
+    "s2": "^0.3.1",
+    "split": "^0.3.0",
+    "through2": "^0.5.1"
   }
 }
